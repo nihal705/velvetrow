@@ -1,4 +1,3 @@
-import logo from './logo.png'
 import marvelLogo from './marvelLogo.png'
 import googlePlay from './googlePlay.png'
 import appStore from './appStore.png'
@@ -6,7 +5,6 @@ import screenImage from './screenImage.png'
 import profile from './profile.png'
 
 export const assets = {
-    logo,
     marvelLogo,
     googlePlay,
     appStore,
