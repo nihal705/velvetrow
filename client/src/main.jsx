@@ -10,8 +10,6 @@ if (!PUBLISHABLE_KEY) {
   throw new Error('Missing Publishable key')
 }
 
-console.log("Clerk Key:", import.meta.env.VITE_CLERK_PUBLISHABLE_KEY);
-
 createRoot(document.getElementById('root')).render(
   <ClerkProvider publishableKey={PUBLISHABLE_KEY}>
     <BrowserRouter>
