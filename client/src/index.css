@@ -16,3 +16,30 @@ body {
   color: white;
   background-color: #09090b;
 }
+
+/* Dark mode date/time inputs */
+input[type="date"],
+input[type="time"],
+input[type="datetime-local"] {
+  color-scheme: dark;
+  background-color: transparent;
+  color: white;
+  border: none;
+  outline: none;
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator,
+input[type="time"]::-webkit-calendar-picker-indicator {
+  filter: invert(1);
+  cursor: pointer;
+}
+
+input[type="date"]::-webkit-datetime-edit,
+input[type="time"]::-webkit-datetime-edit {
+  color: white;
+}
+
+/* Placeholder text color for inputs */
+input::placeholder {
+  color: #666;
+}
