@@ -9,7 +9,6 @@ const checkSeatsAvailability = async (showId, selectedSeats) => {
   try {
     const showData = await Show.findById(showId);
     if (!showData) {
-      console.log("❌ Show not found:", showId);
       return false;
     }
 
@@ -20,7 +19,6 @@ const checkSeatsAvailability = async (showId, selectedSeats) => {
 
     return !isAnySeatTaken;
   } catch (error) {
-    console.log("❌ checkSeatsAvailability error:", error.message);
     return false;
   }
 };
@@ -31,15 +29,10 @@ export const createBooking = async (req, res) => {
     const { showId, selectedSeats } = req.body;
     const { origin } = req.headers;
 
-    console.log("📝 Creating booking for showId:", showId);
-    console.log("📝 Selected seats:", selectedSeats);
-    console.log("📝 User ID:", userId);
-
     // Check if the seat is available for the selected show
     const isAvailable = await checkSeatsAvailability(showId, selectedSeats);
 
     if (!isAvailable) {
-      console.log("❌ Seats not available");
       return res.json({
         success: false,
         message: "Selected Seats are not available.",
@@ -49,15 +42,11 @@ export const createBooking = async (req, res) => {
     // Get the show details
     const showData = await Show.findById(showId).populate("movie");
     if (!showData) {
-      console.log("❌ Show not found in database:", showId);
       return res.json({
         success: false,
         message: "Show not found.",
       });
     }
-
-    console.log("✅ Show found:", showData._id);
-    console.log("✅ Movie:", showData.movie?.title);
 
     // Create a new booking
     const booking = await Booking.create({
@@ -67,8 +56,6 @@ export const createBooking = async (req, res) => {
       bookedSeats: selectedSeats,
     });
 
-    console.log("✅ Booking created:", booking._id);
-
     // Reserve seats
     selectedSeats.forEach((seat) => {
       showData.occupiedSeats[seat] = userId;
@@ -76,8 +63,6 @@ export const createBooking = async (req, res) => {
 
     showData.markModified("occupiedSeats");
     await showData.save();
-
-    console.log("✅ Seats reserved successfully");
 
     // ---------- RAZORPAY INTEGRATION ----------
     const razorpayInstance = new Razorpay({
@@ -99,7 +84,6 @@ export const createBooking = async (req, res) => {
     };
 
     const order = await razorpayInstance.orders.create(options);
-    console.log("✅ Razorpay order created:", order.id);
 
     // Store order ID in booking
     booking.razorpayOrderId = order.id;
@@ -114,9 +98,7 @@ export const createBooking = async (req, res) => {
           bookingId: booking._id.toString(),
         },
       });
-      console.log("✅ Inngest event sent");
     } catch (error) {
-      console.log("⚠️ Inngest error:", error.message);
       // Continue without Inngest
     }
 
@@ -138,16 +120,13 @@ export const createBooking = async (req, res) => {
 export const getOccupiedSeats = async (req, res) => {
   try {
     const { showId } = req.params;
-    console.log("🔍 Getting occupied seats for showId:", showId);
 
     const showData = await Show.findById(showId);
     if (!showData) {
-      console.log("❌ Show not found:", showId);
       return res.json({ success: false, message: "Show not found" });
     }
 
     const occupiedSeats = Object.keys(showData.occupiedSeats || {});
-    console.log("✅ Occupied seats:", occupiedSeats);
 
     res.json({ success: true, occupiedSeats });
   } catch (error) {
@@ -165,8 +144,6 @@ export const verifyPayment = async (req, res) => {
       bookingId,
     } = req.body;
 
-    console.log("🔍 Verifying payment for booking:", bookingId);
-
     // Verify the payment signature
     const secret = process.env.RAZORPAY_KEY_SECRET;
     const body = `${razorpay_order_id}|${razorpay_payment_id}`;
@@ -177,7 +154,6 @@ export const verifyPayment = async (req, res) => {
       .digest("hex");
 
     if (expectedSignature !== razorpay_signature) {
-      console.log("❌ Invalid payment signature");
       return res.json({
         success: false,
         message: "Invalid payment signature",
@@ -192,18 +168,13 @@ export const verifyPayment = async (req, res) => {
       paymentLink: "",
     });
 
-    console.log("✅ Payment verified and booking updated");
-
     // Try Inngest but don't fail if it doesn't work
     try {
       await inngest.send({
         name: "app/show.booked",
         data: { bookingId },
       });
-      console.log("✅ Inngest booking confirmation sent");
-    } catch (error) {
-      console.log("⚠️ Inngest error:", error.message);
-    }
+    } catch (error) {}
 
     res.json({ success: true, message: "Payment verified successfully" });
   } catch (error) {
