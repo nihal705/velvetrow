@@ -2,9 +2,7 @@
   "name": "velvetrow",
   "version": "1.0.0",
   "type": "module",
-  "scripts": {
-    "vercel-build": "echo hello"
-  },
+  "scripts": {},
   "dependencies": {
     "@clerk/express": "^1.7.0",
     "axios": "^1.7.7",
