@@ -9,11 +9,11 @@ import SeatLayout from './pages/SeatLayout'
 import MyBookings from './pages/MyBookings'
 import Favorite from './pages/Favorite'
 import { Toaster } from 'react-hot-toast'
-import Layout from './pages/admin/Layout'
-import Dashboard from './pages/admin/Dashboard'
-import AddShows from './pages/admin/AddShows'
-import ListShows from './pages/admin/ListShows'
-import ListBookings from './pages/admin/ListBookings'
+import Layout from './pages/Admin/Layout'
+import Dashboard from './pages/Admin/Dashboard'
+import AddShows from './pages/Admin/AddShows'
+import ListShows from './pages/Admin/ListShows'
+import ListBookings from './pages/Admin/ListBookings'
 
 const App = () => {
 
