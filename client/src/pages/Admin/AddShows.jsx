@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import Loading from "../../components/Loading";
 import Title from "../../components/Admin/Title";
 import { CheckIcon, DeleteIcon, StarIcon } from "lucide-react";
-import { kConverter } from "../../lib/kConverter";
+import { kConverter } from "../../lib/KConverter";
 import { useAppContext } from "../../context/AppContext";
 import toast from "react-hot-toast";
 
