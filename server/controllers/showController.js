@@ -8,7 +8,8 @@ const dummyMovies = [
   {
     id: 324544,
     title: "In the Lost Lands",
-    overview: "A queen sends the powerful and feared sorceress Gray Alys to the ghostly wilderness of the Lost Lands in search of a magical power.",
+    overview:
+      "A queen sends the powerful and feared sorceress Gray Alys to the ghostly wilderness of the Lost Lands in search of a magical power.",
     poster_path: "/dDlfjR7gllmr8HTeN6rfrYhTdwX.jpg",
     backdrop_path: "/op3qmNhvwEvyT7UFyPbIfQmKriB.jpg",
     release_date: "2025-02-27",
@@ -19,7 +20,8 @@ const dummyMovies = [
   {
     id: 1232546,
     title: "Until Dawn",
-    overview: "One year after her sister mysteriously disappeared, Clover and her friends head into the remote valley where she vanished in search of answers.",
+    overview:
+      "One year after her sister mysteriously disappeared, Clover and her friends head into the remote valley where she vanished in search of answers.",
     poster_path: "/juA4IWO52Fecx8lhAsxmDgy3M3.jpg",
     backdrop_path: "/icFWIk1KfkWLZnugZAJEDauNZ94.jpg",
     release_date: "2025-04-23",
@@ -30,7 +32,8 @@ const dummyMovies = [
   {
     id: 552524,
     title: "Lilo & Stitch",
-    overview: "The wildly funny and touching story of a lonely Hawaiian girl and the fugitive alien who helps to mend her broken family.",
+    overview:
+      "The wildly funny and touching story of a lonely Hawaiian girl and the fugitive alien who helps to mend her broken family.",
     poster_path: "/mKKqV23MQ0uakJS8OCE2TfV5jNS.jpg",
     backdrop_path: "/7Zx3wDG5bBtcfk8lcnCWDOLM4Y4.jpg",
     release_date: "2025-05-17",
@@ -41,7 +44,8 @@ const dummyMovies = [
   {
     id: 668489,
     title: "Havoc",
-    overview: "When a drug heist swerves lethally out of control, a jaded cop fights his way through a corrupt city's criminal underworld.",
+    overview:
+      "When a drug heist swerves lethally out of control, a jaded cop fights his way through a corrupt city's criminal underworld.",
     poster_path: "/ubP2OsF3GlfqYPvXyLw9d78djGX.jpg",
     backdrop_path: "/65MVgDa6YjSdqzh7YOA04mYkioo.jpg",
     release_date: "2025-04-25",
@@ -52,7 +56,8 @@ const dummyMovies = [
   {
     id: 950387,
     title: "A Minecraft Movie",
-    overview: "Four misfits find themselves struggling with ordinary problems when they are suddenly pulled through a mysterious portal into the Overworld.",
+    overview:
+      "Four misfits find themselves struggling with ordinary problems when they are suddenly pulled through a mysterious portal into the Overworld.",
     poster_path: "/yFHHfHcUgGAxziP1C3lLt0q2T4s.jpg",
     backdrop_path: "/2Nti3gYAX513wvhp8IiLL6ZDyOm.jpg",
     release_date: "2025-03-31",
@@ -63,7 +68,8 @@ const dummyMovies = [
   {
     id: 575265,
     title: "Mission: Impossible - The Final Reckoning",
-    overview: "Ethan Hunt and team continue their search for the terrifying AI known as the Entity.",
+    overview:
+      "Ethan Hunt and team continue their search for the terrifying AI known as the Entity.",
     poster_path: "/z53D72EAOxGRqdr7KXXWp9dJiDe.jpg",
     backdrop_path: "/1p5aI299YBnqrEEvVGJERk2MXXb.jpg",
     release_date: "2025-05-17",
@@ -74,7 +80,8 @@ const dummyMovies = [
   {
     id: 986056,
     title: "Thunderbolts*",
-    overview: "After finding themselves ensnared in a death trap, seven disillusioned castoffs must embark on a dangerous mission.",
+    overview:
+      "After finding themselves ensnared in a death trap, seven disillusioned castoffs must embark on a dangerous mission.",
     poster_path: "/m9EtP1Yrzv6v7dMaC9mRaGhd1um.jpg",
     backdrop_path: "/rthMuZfFv4fqEU4JVbgSW9wQ8rs.jpg",
     release_date: "2025-04-30",
@@ -87,25 +94,22 @@ const dummyMovies = [
 // API to get now playing movies from TMDB API (with fallback)
 export const getNowPlayingMovies = async (req, res) => {
   try {
-    console.log("🔍 Fetching movies from TMDB API...");
-    
     const { data } = await axios.get(
-  "https://cors-anywhere.herokuapp.com/https://api.themoviedb.org/3/movie/now_playing",
-  { headers: { Authorization: `Bearer ${process.env.TMDB_API_KEY}` } }
-);
+      "https://cors-anywhere.herokuapp.com/https://api.themoviedb.org/3/movie/now_playing",
+      { headers: { Authorization: `Bearer ${process.env.TMDB_API_KEY}` } },
+    );
 
     const movies = data.results;
-    console.log(`✅ Fetched ${movies.length} movies from TMDB`);
+
     res.json({ success: true, movies: movies });
   } catch (error) {
     console.error("❌ TMDB API error:", error.message);
-    console.log("🔄 Using dummy movie data as fallback...");
-    
+
     // Return dummy data as fallback
-    res.json({ 
-      success: true, 
+    res.json({
+      success: true,
       movies: dummyMovies,
-      message: "Using sample movie data (TMDB API not available)"
+      message: "Using sample movie data (TMDB API not available)",
     });
   }
 };
@@ -151,15 +155,14 @@ export const addShow = async (req, res) => {
         };
 
         movie = await Movie.create(movieDetails);
-        console.log(`✅ Movie added to database: ${movie.title}`);
       } catch (error) {
         console.error("❌ Error fetching movie details:", error.message);
-        
+
         // Check if movie exists in dummy data
-        const dummyMovie = dummyMovies.find(m => String(m.id) === String(movieId));
+        const dummyMovie = dummyMovies.find(
+          (m) => String(m.id) === String(movieId),
+        );
         if (dummyMovie) {
-          console.log(`🔄 Using dummy movie data for ID: ${movieId}`);
-          
           const movieDetails = {
             _id: movieId,
             title: dummyMovie.title,
@@ -174,13 +177,12 @@ export const addShow = async (req, res) => {
             vote_average: dummyMovie.vote_average || 0,
             runtime: 120,
           };
-          
+
           movie = await Movie.create(movieDetails);
-          console.log(`✅ Movie added from dummy data: ${movie.title}`);
         } else {
-          return res.json({ 
-            success: false, 
-            message: `Movie not found: ${movieId}. Please try a different movie.` 
+          return res.json({
+            success: false,
+            message: `Movie not found: ${movieId}. Please try a different movie.`,
           });
         }
       }
@@ -202,7 +204,6 @@ export const addShow = async (req, res) => {
 
     if (showsToCreate.length > 0) {
       await Show.insertMany(showsToCreate);
-      console.log(`✅ Added ${showsToCreate.length} shows to database`);
     }
 
     res.json({ success: true, message: "Show Added successfully." });
@@ -238,15 +239,16 @@ export const getShow = async (req, res) => {
     });
 
     const movie = await Movie.findById(movieId);
-    
+
     if (!movie) {
       // Check if movie exists in dummy data
-      const dummyMovie = dummyMovies.find(m => String(m.id) === String(movieId));
+      const dummyMovie = dummyMovies.find(
+        (m) => String(m.id) === String(movieId),
+      );
       if (dummyMovie) {
-        console.log(`🔄 Using dummy movie data for ID: ${movieId}`);
         // Return empty shows but with dummy movie data
-        return res.json({ 
-          success: true, 
+        return res.json({
+          success: true,
           movie: {
             _id: movieId,
             title: dummyMovie.title,
@@ -257,7 +259,7 @@ export const getShow = async (req, res) => {
             original_language: dummyMovie.original_language || "en",
             vote_average: dummyMovie.vote_average || 0,
           },
-          dateTime: {} 
+          dateTime: {},
         });
       }
       return res.json({ success: false, message: "Movie not found" });
