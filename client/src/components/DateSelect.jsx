@@ -51,6 +51,10 @@ const DateSelect = ({ dateTime, id }) => {
                     type="button"
                     onClick={() => setSelected(date)}
                     key={date}
+                    aria-label={new Date(`${date}T00:00:00`).toLocaleDateString(
+                      "en-US",
+                      { year: "numeric", month: "long", day: "numeric" },
+                    )}
                     className={`flex flex-col items-center justify-center h-14 w-14 aspect-square rounded cursor-pointer ${
                       selected === date
                         ? "bg-primary text-white"
@@ -58,8 +62,11 @@ const DateSelect = ({ dateTime, id }) => {
                     }`}
                   >
                     <span>{localDate.getDate()}</span>
-                    <span>
-                      {localDate.toLocaleString("en-US", { month: "short" })}
+                    <span className="text-xs leading-tight">
+                      {localDate.toLocaleString("en-US", {
+                        month: "short",
+                        year: "numeric",
+                      })}
                     </span>
                   </button>
                 );

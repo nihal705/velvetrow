@@ -18,6 +18,12 @@ const AddShows = () => {
   const [showPrice, setShowPrice] = useState("");
   const [addingShow, setAddingShow] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [today] = useState(() => {
+    const now = new Date();
+    const month = String(now.getMonth() + 1).padStart(2, "0");
+    const day = String(now.getDate()).padStart(2, "0");
+    return `${now.getFullYear()}-${month}-${day}`;
+  });
 
   const fetchNowPlayingMovies = async () => {
     setLoading(true);
@@ -249,6 +255,7 @@ const AddShows = () => {
               <div className="flex items-center gap-2 border border-gray-600 px-3 py-2 rounded-md bg-gray-900/50">
                 <input
                   type="date"
+                  min={today}
                   value={selectedDate}
                   onChange={(e) => setSelectedDate(e.target.value)}
                   className="outline-none bg-transparent text-white cursor-pointer"

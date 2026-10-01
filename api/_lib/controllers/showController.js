@@ -119,6 +119,69 @@ export const addShow = async (req, res) => {
   try {
     const { movieId, showsInput, showPrice } = req.body;
 
+    if (!Array.isArray(showsInput) || showsInput.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Add at least one show date and time.",
+      });
+    }
+
+    if (!Number.isFinite(Number(showPrice)) || Number(showPrice) <= 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Enter a valid show price.",
+      });
+    }
+
+    const now = new Date();
+    for (const show of showsInput) {
+      if (
+        !show ||
+        typeof show.date !== "string" ||
+        !/^\d{4}-\d{2}-\d{2}$/.test(show.date) ||
+        !Array.isArray(show.time) ||
+        show.time.length === 0
+      ) {
+        return res.status(400).json({
+          success: false,
+          message: "Each show must have a valid date and at least one time.",
+        });
+      }
+
+      const [year, month, day] = show.date.split("-").map(Number);
+      const validDate = new Date(Date.UTC(year, month - 1, day));
+      if (
+        validDate.getUTCFullYear() !== year ||
+        validDate.getUTCMonth() !== month - 1 ||
+        validDate.getUTCDate() !== day
+      ) {
+        return res.status(400).json({
+          success: false,
+          message: "Enter a valid show date.",
+        });
+      }
+
+      for (const time of show.time) {
+        if (typeof time !== "string" || !/^\d{2}:\d{2}$/.test(time)) {
+          return res.status(400).json({
+            success: false,
+            message: "Enter a valid show time.",
+          });
+        }
+
+        const showDateTime = new Date(`${show.date}T${time}:00`);
+        if (
+          Number.isNaN(showDateTime.getTime()) ||
+          showDateTime <= now
+        ) {
+          return res.status(400).json({
+            success: false,
+            message: "Show dates and times must be in the future.",
+          });
+        }
+      }
+    }
+
     let movie = await Movie.findById(movieId);
 
     if (!movie) {
