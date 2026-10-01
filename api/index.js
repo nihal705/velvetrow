@@ -12,8 +12,6 @@ import { razorpayWebhook } from "./_lib/controllers/razorpayWebhook.js";
 dotenv.config();
 const app = express();
 
-connectDB();
-
 const allowedOrigins = [
   "http://localhost:5173",
   "http://localhost:5174",
@@ -37,6 +35,18 @@ app.use(cors({
 
 app.options("*", cors());
 
+app.get("/", (req, res) => res.send("Server is live"));
+
+app.use(async (req, res, next) => {
+  try {
+    await connectDB();
+    next();
+  } catch (error) {
+    console.error("Database connection error:", error.message);
+    res.status(503).json({ success: false, message: "Database unavailable" });
+  }
+});
+
 app.post("/api/razorpay-webhook", express.raw({ type: "application/json" }), razorpayWebhook);
 
 app.use(express.json());
@@ -46,7 +56,5 @@ app.use("/api/show", showRouter);
 app.use("/api/booking", bookingRouter);
 app.use("/api/admin", adminRouter);
 app.use("/api/user", userRouter);
-
-app.get("/", (req, res) => res.send("Server is live"));
 
 export default app;
