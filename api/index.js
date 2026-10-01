@@ -2,12 +2,12 @@ import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 import { clerkMiddleware } from "@clerk/express";
-import connectDB from "./config/db.js";
-import showRouter from "./routes/showRoutes.js";
-import bookingRouter from "./routes/bookingRoutes.js";
-import adminRouter from "./routes/adminRoutes.js";
-import userRouter from "./routes/userRoutes.js";
-import { razorpayWebhook } from "./controllers/razorpayWebhook.js";
+import connectDB from "./_lib/config/db.js";
+import showRouter from "./_lib/routes/showRoutes.js";
+import bookingRouter from "./_lib/routes/bookingRoutes.js";
+import adminRouter from "./_lib/routes/adminRoutes.js";
+import userRouter from "./_lib/routes/userRoutes.js";
+import { razorpayWebhook } from "./_lib/controllers/razorpayWebhook.js";
 
 dotenv.config();
 const app = express();
