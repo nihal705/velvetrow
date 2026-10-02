@@ -2,6 +2,7 @@ import { clerkClient } from "@clerk/express";
 import Booking from "../models/Booking.js";
 import Movie from "../models/Movie.js";
 import { expirePendingBookings } from "../utils/bookingCleanup.js";
+import crypto from "crypto";
 
 // API Controller Function to Get User Bookings
 export const getUserBookings = async (req, res) => {
@@ -15,6 +16,21 @@ export const getUserBookings = async (req, res) => {
         populate: { path: "movie" },
       })
       .sort({ createdAt: -1 });
+
+    for (const booking of bookings) {
+      if (booking.isPaid && booking.tickets.length !== booking.bookedSeats.length) {
+        const existingSeats = new Set(booking.tickets.map((ticket) => ticket.seat));
+        booking.bookedSeats.forEach((seat) => {
+          if (!existingSeats.has(seat)) {
+            booking.tickets.push({
+              seat,
+              ticketId: crypto.randomBytes(24).toString("hex"),
+            });
+          }
+        });
+        await booking.save();
+      }
+    }
 
     res.json({ success: true, bookings });
   } catch (error) {

@@ -57,6 +57,7 @@ export const razorpayWebhook = async (request, response) => {
           isPaid: false,
         }, {
           isPaid: true,
+          paidAt: new Date(),
           razorpayPaymentId: payment.id,
           razorpayOrderId: payment.order_id,
           paymentLink: "",
