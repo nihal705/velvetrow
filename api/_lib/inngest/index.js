@@ -3,6 +3,7 @@ import User from "../models/User.js";
 import Booking from "../models/Booking.js";
 import Show from "../models/Show.js";
 import { sendEmail } from "../config/nodeMailer.js";
+import { expirePendingBooking } from "../utils/bookingCleanup.js";
 
 export const inngest = new Inngest({ id: "movie-ticket-booking" });
 
@@ -63,14 +64,8 @@ const releaseSeatsAndDeleteBooking = inngest.createFunction(
       const booking = await Booking.findById(bookingId);
 
       // If payment is not made, release seats and delete booking
-      if (!booking.isPaid) {
-        const show = await Show.findById(booking.show);
-        booking.bookedSeats.forEach((seat) => {
-          delete show.occupiedSeats[seat];
-        });
-        show.markModified("occupiedSeats");
-        await show.save();
-        await Booking.findByIdAndDelete(booking._id);
+      if (booking && !booking.isPaid) {
+        await expirePendingBooking(booking);
       }
     });
   }
