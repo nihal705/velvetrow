@@ -1,4 +1,4 @@
-import React from 'react'
+import { lazy, Suspense } from 'react'
 import Navbar from './components/Navbar'
 import Footer from './components/Footer'
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom'
@@ -14,6 +14,8 @@ import Dashboard from './pages/Admin/Dashboard'
 import AddShows from './pages/Admin/AddShows'
 import ListShows from './pages/Admin/ListShows'
 import ListBookings from './pages/Admin/ListBookings'
+import Loading from './components/Loading'
+const ScanTickets = lazy(() => import('./pages/Admin/ScanTickets'))
 
 const App = () => {
 
@@ -38,6 +40,14 @@ const App = () => {
           <Route path='add-shows' element={<AddShows />} />
           <Route path='list-shows' element={<ListShows />} />
           <Route path='list-bookings' element={<ListBookings />} />
+          <Route
+            path='scan-tickets'
+            element={
+              <Suspense fallback={<Loading />}>
+                <ScanTickets />
+              </Suspense>
+            }
+          />
         </Route>
 
         <Route path="*" element={<Navigate to="/" replace />} />

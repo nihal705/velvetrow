@@ -4,6 +4,7 @@ import {
   ListCollapseIcon,
   ListIcon,
   PlusSquareIcon,
+  ScanQrCodeIcon,
 } from "lucide-react";
 import { NavLink } from "react-router-dom";
 
@@ -22,6 +23,11 @@ const AdminSidebar = () => {
       name: "List Bookings",
       path: "/admin/list-bookings",
       icon: ListCollapseIcon,
+    },
+    {
+      name: "Scan Tickets",
+      path: "/admin/scan-tickets",
+      icon: ScanQrCodeIcon,
     },
   ];
 
