@@ -51,12 +51,13 @@ const ListBookings = () => {
                 <th className="p-2 font-medium">Show Time</th>
                 <th className="p-2 font-medium">Seats</th>
                 <th className="p-2 font-medium">Amount</th>
+                <th className="p-2 font-medium">Payment</th>
               </tr>
             </thead>
             <tbody className="text-sm font-light">
-              {bookings.map((item, index) => (
+              {bookings.map((item) => (
                 <tr
-                  key={index}
+                  key={item._id}
                   className="border-b border-primary/20 bg-primary/5 even:bg-primary/10"
                 >
                   <td className="p-2 min-w-45 pl-5">{item.user?.name || "Unknown"}</td>
@@ -67,6 +68,13 @@ const ListBookings = () => {
                   </td>
                   <td className="p-2">
                     {currency} {item.amount || 0}
+                  </td>
+                  <td className="p-2">
+                    {item.isPaid ? (
+                      <span className="text-green-400">Paid</span>
+                    ) : (
+                      <span className="text-yellow-400">Pending</span>
+                    )}
                   </td>
                 </tr>
               ))}

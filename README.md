@@ -163,9 +163,6 @@ VITE_CURRENCY=₹
 
 # TMDB Image Base URL
 VITE_TMDB_IMAGE_BASE_URL=https://image.tmdb.org/t/p/original
-
-# Razorpay Key ID
-VITE_RAZORPAY_KEY_ID=rzp_test_xxxxxxxxxx
 ```
 
 #### Server (server/.env)
@@ -195,6 +192,8 @@ SENDER_EMAIL=your-email@example.com
 SMTP_USER=your-smtp-username
 SMTP_PASS=your-smtp-password
 ```
+
+Razorpay Checkout uses the key ID returned by the backend order endpoint, so do not expose or configure the Razorpay key secret in the client. `RAZORPAY_KEY_ID` and `RAZORPAY_KEY_SECRET` must be a matching pair from the same Razorpay account and mode. `RAZORPAY_WEBHOOK_SECRET` is a separate secret generated in the Razorpay webhook settings.
 
 ### Installation
 

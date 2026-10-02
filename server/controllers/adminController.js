@@ -1,6 +1,7 @@
 import Booking from "../models/Booking.js";
 import Show from "../models/Show.js";
 import User from "../models/User.js";
+import { expirePendingBookings } from "../utils/bookingCleanup.js";
 
 // API to check if user is an admin
 export const isAdmin = async (req, res) => {
@@ -38,7 +39,25 @@ export const getAllShows = async (req, res) => {
       .populate("movie")
       .sort({ showDateTime: 1 });
 
-    res.json({ success: true, shows });
+    const paidBookings = await Booking.find({
+      show: { $in: shows.map((show) => show._id) },
+      isPaid: true,
+    }).select("show amount");
+    const paidByShow = new Map();
+    paidBookings.forEach((booking) => {
+      const showId = booking.show.toString();
+      const totals = paidByShow.get(showId) || { bookings: 0, revenue: 0 };
+      totals.bookings += 1;
+      totals.revenue += booking.amount;
+      paidByShow.set(showId, totals);
+    });
+    const showsWithTotals = shows.map((show) => ({
+      ...show.toObject(),
+      totalBookings: paidByShow.get(show._id.toString())?.bookings || 0,
+      totalRevenue: paidByShow.get(show._id.toString())?.revenue || 0,
+    }));
+
+    res.json({ success: true, shows: showsWithTotals });
   } catch (error) {
     console.error(error);
     res.json({ success: false, message: error.message });
@@ -48,6 +67,7 @@ export const getAllShows = async (req, res) => {
 // API to get all bookings
 export const getAllBookings = async (req, res) => {
   try {
+    await expirePendingBookings({});
     const bookings = await Booking.find({})
       .populate("user")
       .populate({
