@@ -23,6 +23,43 @@ const checkSeatsAvailability = async (showId, selectedSeats) => {
   }
 };
 
+const rollbackFailedBooking = async ({
+  showId,
+  bookingId,
+  selectedSeats,
+  userId,
+}) => {
+  const cleanupResults = await Promise.allSettled([
+    (async () => {
+      const show = await Show.findById(showId);
+      if (!show) {
+        throw new Error(`Show ${showId} was not found during booking rollback.`);
+      }
+
+      let seatsChanged = false;
+      selectedSeats.forEach((seat) => {
+        if (show.occupiedSeats?.[seat] === userId) {
+          delete show.occupiedSeats[seat];
+          seatsChanged = true;
+        }
+      });
+
+      if (seatsChanged) {
+        show.markModified("occupiedSeats");
+        await show.save();
+      }
+    })(),
+    Booking.findByIdAndDelete(bookingId),
+  ]);
+
+  cleanupResults.forEach((result, index) => {
+    if (result.status === "rejected") {
+      const action = index === 0 ? "release reserved seats" : "delete booking";
+      console.error(`Failed to ${action} during booking rollback:`, result.reason);
+    }
+  });
+};
+
 export const createBooking = async (req, res) => {
   try {
     const { userId } = req.auth;
@@ -65,11 +102,6 @@ export const createBooking = async (req, res) => {
     await showData.save();
 
     // ---------- RAZORPAY INTEGRATION ----------
-    const razorpayInstance = new Razorpay({
-      key_id: process.env.RAZORPAY_KEY_ID,
-      key_secret: process.env.RAZORPAY_KEY_SECRET,
-    });
-
     // Create Razorpay Order
     const options = {
       amount: booking.amount * 100, // Amount in paise
@@ -83,12 +115,27 @@ export const createBooking = async (req, res) => {
       },
     };
 
-    const order = await razorpayInstance.orders.create(options);
+    let order;
+    try {
+      const razorpayInstance = new Razorpay({
+        key_id: process.env.RAZORPAY_KEY_ID,
+        key_secret: process.env.RAZORPAY_KEY_SECRET,
+      });
+      order = await razorpayInstance.orders.create(options);
 
-    // Store order ID in booking
-    booking.razorpayOrderId = order.id;
-    booking.paymentLink = null;
-    await booking.save();
+      // Store order ID in booking
+      booking.razorpayOrderId = order.id;
+      booking.paymentLink = null;
+      await booking.save();
+    } catch (error) {
+      await rollbackFailedBooking({
+        showId,
+        bookingId: booking._id,
+        selectedSeats,
+        userId,
+      });
+      throw error;
+    }
 
     // Try Inngest but don't fail if it doesn't work
     try {
