@@ -5,6 +5,8 @@ import timeFormat from "../lib/timeFormat";
 import { dateFormat } from "../lib/dateFormat";
 import { useAppContext } from "../context/AppContext";
 import { Link } from "react-router-dom";
+import toast from "react-hot-toast";
+import loadRazorpay from "../lib/loadRazorpay";
 
 const MyBookings = () => {
   const currency = import.meta.env.VITE_CURRENCY;
@@ -23,8 +25,109 @@ const MyBookings = () => {
       if (data.success) {
         setBookings(data.bookings);
       }
-    } catch (error) {}
-    setIsLoading(false);
+    } catch (error) {
+      console.error("Failed to load bookings:", error);
+      toast.error(error.response?.data?.message || "Failed to load your bookings.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const getAuthConfig = async () => ({
+    headers: { Authorization: `Bearer ${await getToken()}` },
+  });
+
+  const continuePayment = async (bookingId) => {
+    try {
+      const { data } = await axios.get(
+        `/api/booking/${bookingId}/checkout`,
+        await getAuthConfig(),
+      );
+      if (!data.success) {
+        throw new Error(data.message || "Could not continue payment.");
+      }
+
+      const scriptLoaded = await loadRazorpay();
+      if (!scriptLoaded || !window.Razorpay) {
+        throw new Error("Failed to load Razorpay Checkout. Check your connection and try again.");
+      }
+
+      const checkout = new window.Razorpay({
+        key: data.key,
+        amount: data.amount,
+        currency: data.currency,
+        name: "VelvetRow",
+        description: "Complete your movie ticket booking",
+        order_id: data.orderId,
+        prefill: {
+          name: user.fullName || user.name || "User",
+          email: user.emailAddresses?.[0]?.emailAddress || user.email,
+          contact: user.phoneNumbers?.[0]?.phoneNumber || "",
+        },
+        theme: { color: "#f84565" },
+        modal: {
+          ondismiss: () =>
+            toast.info("Payment cancelled. You can resume or cancel this pending booking."),
+        },
+        handler: async (paymentResponse) => {
+          try {
+            const { data: verification } = await axios.post(
+              "/api/booking/verify-payment",
+              { ...paymentResponse, bookingId },
+              await getAuthConfig(),
+            );
+            if (!verification.success) {
+              throw new Error(verification.message || "Payment verification failed.");
+            }
+            toast.success("Payment successful! Booking confirmed.");
+            await getMyBookings();
+          } catch (error) {
+            console.error("Payment verification failed:", error);
+            toast.error(
+              error.response?.data?.message ||
+                error.message ||
+                "Payment verification failed. Contact support.",
+            );
+          }
+        },
+      });
+      checkout.on("payment.failed", (event) => {
+        console.error("Razorpay payment failed:", event.error);
+        toast.error(event.error?.description || "Razorpay could not complete the payment.");
+      });
+      checkout.open();
+    } catch (error) {
+      console.error("Unable to resume payment:", error);
+      toast.error(
+        error.response?.data?.message ||
+          error.message ||
+          "Unable to resume payment.",
+      );
+      if (error.response?.status === 410) {
+        await getMyBookings();
+      }
+    }
+  };
+
+  const cancelBooking = async (bookingId) => {
+    try {
+      const { data } = await axios.delete(
+        `/api/booking/${bookingId}`,
+        await getAuthConfig(),
+      );
+      if (!data.success) {
+        throw new Error(data.message || "Could not cancel booking.");
+      }
+      toast.success(data.message);
+      await getMyBookings();
+    } catch (error) {
+      console.error("Unable to cancel booking:", error);
+      toast.error(
+        error.response?.data?.message ||
+          error.message ||
+          "Unable to cancel booking.",
+      );
+    }
   };
 
   useEffect(() => {
@@ -57,16 +160,18 @@ const MyBookings = () => {
         </div>
       ) : (
         <div className="space-y-4">
-          {bookings.map((item, index) => {
+          {bookings.map((item) => {
             // Safety check
             if (!item?.show?.movie) return null;
 
             const movie = item.show.movie;
-            const posterUrl = image_base_url + movie.poster_path;
+            const posterUrl = movie.poster_path?.startsWith("http")
+              ? movie.poster_path
+              : `${image_base_url || ""}${movie.poster_path || ""}`;
 
             return (
               <div
-                key={index}
+                key={item._id}
                 className="flex flex-col md:flex-row justify-between bg-primary/8 border border-primary/20 rounded-xl overflow-hidden hover:border-primary/40 transition duration-300"
               >
                 {/* Left Section - Movie Info */}
@@ -78,8 +183,12 @@ const MyBookings = () => {
                       alt={movie.title}
                       className="w-full h-48 sm:h-full object-cover"
                       onError={(e) => {
-                        e.target.src =
-                          "https://via.placeholder.com/300x450/333/666?text=No+Image";
+                        e.currentTarget.onerror = null;
+                        if (movie.backdrop_path) {
+                          e.currentTarget.src = movie.backdrop_path.startsWith("http")
+                            ? movie.backdrop_path
+                            : `${image_base_url || ""}${movie.backdrop_path}`;
+                        }
                       }}
                     />
                   </div>
@@ -127,6 +236,24 @@ const MyBookings = () => {
                       </span>
                     )}
                   </div>
+                  {!item.isPaid && (
+                    <div className="flex gap-2 mt-3 md:flex-col">
+                      <button
+                        type="button"
+                        onClick={() => continuePayment(item._id)}
+                        className="px-3 py-2 rounded-md bg-primary hover:bg-primary-dull text-white text-sm"
+                      >
+                        Continue payment
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => cancelBooking(item._id)}
+                        className="px-3 py-2 rounded-md border border-gray-500 hover:border-red-400 text-sm"
+                      >
+                        Cancel booking
+                      </button>
+                    </div>
+                  )}
                 </div>
               </div>
             );

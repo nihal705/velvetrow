@@ -7,17 +7,7 @@ import isoTimeFormat from "../lib/isoTimeFormat";
 import BlurCircle from "../components/BlurCircle";
 import toast from "react-hot-toast";
 import { useAppContext } from "../context/AppContext";
-
-// Load Razorpay script dynamically
-const loadRazorpayScript = () => {
-  return new Promise((resolve) => {
-    const script = document.createElement("script");
-    script.src = "https://checkout.razorpay.com/v1/checkout.js";
-    script.onload = () => resolve(true);
-    script.onerror = () => resolve(false);
-    document.body.appendChild(script);
-  });
-};
+import loadRazorpay from "../lib/loadRazorpay";
 
 const SeatLayout = () => {
   const groupRows = [
@@ -46,6 +36,7 @@ const SeatLayout = () => {
         setShow(data);
       }
     } catch (error) {
+      console.error("Failed to load show details:", error);
       toast.error("Failed to load show details");
     } finally {
       setIsLoading(false);
@@ -103,7 +94,10 @@ const SeatLayout = () => {
       if (data.success) {
         setOccupiedSeats(data.occupiedSeats);
       }
-    } catch (error) {}
+    } catch (error) {
+      console.error("Failed to refresh occupied seats:", error);
+      toast.error("Unable to refresh seat availability. Please try again.");
+    }
   };
 
   const bookTickets = async () => {
@@ -129,16 +123,20 @@ const SeatLayout = () => {
       }
 
       // 2. Load Razorpay script
-      const scriptLoaded = await loadRazorpayScript();
+      const scriptLoaded = await loadRazorpay();
       if (!scriptLoaded) {
-        toast.error("Failed to load payment gateway. Please try again.");
+        toast.error("Failed to load Razorpay Checkout. Check your connection and try again.");
         setIsProcessing(false);
         return;
       }
 
+      if (!data.key || !data.orderId || !data.amount || !window.Razorpay) {
+        throw new Error("The server returned incomplete payment details. Check the Razorpay configuration.");
+      }
+
       // 3. Open Razorpay Checkout
       const options = {
-        key: data.key || import.meta.env.VITE_RAZORPAY_KEY_ID,
+        key: data.key,
         amount: data.amount,
         currency: data.currency || "INR",
         name: "VelvetRow",
@@ -165,11 +163,18 @@ const SeatLayout = () => {
       };
 
       const razorpay = new window.Razorpay(options);
+      razorpay.on("payment.failed", (event) => {
+        console.error("Razorpay payment failed:", event.error);
+        toast.error(event.error?.description || "Razorpay could not complete the payment.");
+        setIsProcessing(false);
+      });
       razorpay.open();
     } catch (error) {
       console.error("Booking error:", error);
       toast.error(
-        error.response?.data?.message || "Booking failed. Please try again.",
+        error.response?.data?.message ||
+          error.message ||
+          "Booking failed. Please try again.",
       );
       setIsProcessing(false);
     }
