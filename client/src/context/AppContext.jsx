@@ -10,17 +10,33 @@ export const AppContext = createContext();
 
 export const AppProvider = ({ children }) => {
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isAdminLoading, setIsAdminLoading] = useState(false);
   const [shows, setShows] = useState([]);
+  const [isShowsLoading, setIsShowsLoading] = useState(true);
   const [favoriteMovies, setFavoriteMovies] = useState([]);
 
   const image_base_url = import.meta.env.VITE_TMDB_IMAGE_BASE_URL;
 
-  const { user } = useUser();
-  const { getToken } = useAuth();
+  const { user, isLoaded: isUserLoaded } = useUser();
+  const { getToken, isLoaded: isAuthLoaded, isSignedIn } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
 
   const fetchIsAdmin = async () => {
+    if (!isAuthLoaded) {
+      return;
+    }
+
+    if (!isSignedIn) {
+      setIsAdmin(false);
+      if (location.pathname.startsWith("/admin")) {
+        navigate("/");
+        toast.error("Sign in with your admin account to continue.");
+      }
+      return;
+    }
+
+    setIsAdminLoading(true);
     try {
       const { data } = await axios.get("/api/admin/is-admin", {
         headers: { Authorization: `Bearer ${await getToken()}` },
@@ -34,6 +50,16 @@ export const AppProvider = ({ children }) => {
       }
     } catch (error) {
       console.error(error);
+      setIsAdmin(false);
+      if (location.pathname.startsWith("/admin")) {
+        navigate("/");
+        toast.error(
+          error.response?.data?.message ||
+            "Unable to verify admin access. Please sign in and try again.",
+        );
+      }
+    } finally {
+      setIsAdminLoading(false);
     }
   };
 
@@ -48,6 +74,8 @@ export const AppProvider = ({ children }) => {
       }
     } catch (error) {
       console.error(error);
+    } finally {
+      setIsShowsLoading(false);
     }
   };
 
@@ -72,20 +100,28 @@ export const AppProvider = ({ children }) => {
   }, []);
 
   useEffect(() => {
-    if (user) {
-      fetchIsAdmin();
+    if (isUserLoaded && user) {
       fetchFavoriteMovies();
+    } else if (isUserLoaded && location.pathname.startsWith("/admin")) {
+      navigate("/");
+      toast.error("Sign in with your admin account to continue.");
     }
-  }, [user]);
+  }, [isUserLoaded, user]);
 
   const value = {
     axios,
     fetchIsAdmin,
     user,
+    isUserLoaded,
+    isAuthLoaded,
+    isSignedIn,
     getToken,
     navigate,
     isAdmin,
+    isAdminLoading,
     shows,
+    isShowsLoading,
+    fetchShows,
     favoriteMovies,
     fetchFavoriteMovies,
     image_base_url,

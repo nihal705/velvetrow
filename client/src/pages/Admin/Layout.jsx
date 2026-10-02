@@ -6,13 +6,21 @@ import { useEffect } from "react";
 import Loading from "../../components/Loading";
 
 const Layout = () => {
-  const { isAdmin, fetchIsAdmin } = useAppContext();
+  const {
+    isAdmin,
+    isAdminLoading,
+    isAuthLoaded,
+    isSignedIn,
+    fetchIsAdmin,
+  } = useAppContext();
 
   useEffect(() => {
-    fetchIsAdmin();
-  }, []);
+    if (isAuthLoaded) {
+      fetchIsAdmin();
+    }
+  }, [isAuthLoaded, isSignedIn]);
 
-  if (!isAdmin) {
+  if (!isAuthLoaded || isAdminLoading || !isAdmin) {
     return <Loading />;
   }
 
