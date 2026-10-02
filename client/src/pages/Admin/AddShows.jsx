@@ -16,6 +16,9 @@ const AddShows = () => {
   const [selectedDate, setSelectedDate] = useState("");
   const [selectedTime, setSelectedTime] = useState("");
   const [showPrice, setShowPrice] = useState("");
+  const [theaterName, setTheaterName] = useState("");
+  const [theaterAddress, setTheaterAddress] = useState("");
+  const [theaterMapUrl, setTheaterMapUrl] = useState("");
   const [addingShow, setAddingShow] = useState(false);
   const [loading, setLoading] = useState(true);
   const [today] = useState(() => {
@@ -75,7 +78,8 @@ const AddShows = () => {
     setDateTimeSelection((prev) => {
       const filteredTimes = prev[date].filter((t) => t !== time);
       if (filteredTimes.length === 0) {
-        const { [date]: _, ...rest } = prev;
+        const rest = { ...prev };
+        delete rest[date];
         return rest;
       }
       return {
@@ -107,6 +111,12 @@ const AddShows = () => {
         return;
       }
 
+      if (!theaterName.trim() || !theaterAddress.trim()) {
+        toast.error("Enter the theater name and address");
+        setAddingShow(false);
+        return;
+      }
+
       const showsInput = Object.entries(dateTimeSelection).map(
         ([date, times]) => ({
           date,
@@ -118,6 +128,9 @@ const AddShows = () => {
         movieId: selectedMovie,
         showsInput,
         showPrice: Number(showPrice),
+        theaterName,
+        theaterAddress,
+        theaterMapUrl,
       };
 
       const { data } = await axios.post("/api/show/add", payload, {
@@ -132,6 +145,9 @@ const AddShows = () => {
         setShowPrice("");
         setSelectedDate("");
         setSelectedTime("");
+        setTheaterName("");
+        setTheaterAddress("");
+        setTheaterMapUrl("");
         // Refresh the movie list
         fetchNowPlayingMovies();
       } else {
@@ -247,6 +263,39 @@ const AddShows = () => {
             </div>
           </div>
 
+          <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4 max-w-3xl">
+            <label className="text-sm font-medium">
+              Theater Name
+              <input
+                required
+                value={theaterName}
+                onChange={(event) => setTheaterName(event.target.value)}
+                placeholder="e.g. VelvetRow Central"
+                className="mt-2 w-full rounded-md border border-gray-600 bg-gray-900/50 px-3 py-2 text-white outline-none focus:border-primary"
+              />
+            </label>
+            <label className="text-sm font-medium">
+              Theater Address
+              <input
+                required
+                value={theaterAddress}
+                onChange={(event) => setTheaterAddress(event.target.value)}
+                placeholder="Street, city, postal code"
+                className="mt-2 w-full rounded-md border border-gray-600 bg-gray-900/50 px-3 py-2 text-white outline-none focus:border-primary"
+              />
+            </label>
+            <label className="text-sm font-medium md:col-span-2">
+              Map Link (optional)
+              <input
+                type="url"
+                value={theaterMapUrl}
+                onChange={(event) => setTheaterMapUrl(event.target.value)}
+                placeholder="https://maps.google.com/..."
+                className="mt-2 w-full rounded-md border border-gray-600 bg-gray-900/50 px-3 py-2 text-white outline-none focus:border-primary"
+              />
+            </label>
+          </div>
+
           {/* Date & Time Selection */}
           <div className="mt-6">
             <label className="block text-sm font-medium mb-2">
@@ -321,7 +370,9 @@ const AddShows = () => {
               addingShow ||
               !selectedMovie ||
               Object.keys(dateTimeSelection).length === 0 ||
-              !showPrice
+              !showPrice ||
+              !theaterName.trim() ||
+              !theaterAddress.trim()
             }
             className="bg-primary text-white px-8 py-2.5 mt-6 rounded-lg hover:bg-primary/90 transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed font-medium"
           >
