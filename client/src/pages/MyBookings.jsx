@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 import Loading from "../components/Loading";
 import BlurCircle from "../components/BlurCircle";
 import timeFormat from "../lib/timeFormat";
@@ -7,6 +7,47 @@ import { useAppContext } from "../context/AppContext";
 import { Link } from "react-router-dom";
 import toast from "react-hot-toast";
 import loadRazorpay from "../lib/loadRazorpay";
+import QRCode from "qrcode";
+
+const formatDateTime = (value) =>
+  new Date(value).toLocaleString(undefined, {
+    dateStyle: "medium",
+    timeStyle: "short",
+  });
+
+const TicketQRCode = ({ ticketId }) => {
+  const [qrCode, setQrCode] = useState("");
+
+  useEffect(() => {
+    let isCurrent = true;
+    QRCode.toDataURL(ticketId, {
+      width: 192,
+      margin: 1,
+      errorCorrectionLevel: "M",
+    })
+      .then((dataUrl) => {
+        if (isCurrent) setQrCode(dataUrl);
+      })
+      .catch((error) => {
+        console.error("Failed to create ticket QR code:", error);
+        if (isCurrent) toast.error("Could not generate this ticket's QR code.");
+      });
+
+    return () => {
+      isCurrent = false;
+    };
+  }, [ticketId]);
+
+  return qrCode ? (
+    <img
+      src={qrCode}
+      alt={`Entry QR code for seat ${ticketId}`}
+      className="w-36 h-36 rounded-lg bg-white p-2"
+    />
+  ) : (
+    <div className="w-36 h-36 rounded-lg bg-white/10 animate-pulse" aria-label="Generating ticket QR code" />
+  );
+};
 
 const MyBookings = () => {
   const currency = import.meta.env.VITE_CURRENCY;
@@ -168,10 +209,16 @@ const MyBookings = () => {
             const posterUrl = movie.poster_path?.startsWith("http")
               ? movie.poster_path
               : `${image_base_url || ""}${movie.poster_path || ""}`;
+            const showStart = new Date(item.show.showDateTime);
+            const validUntil = new Date(
+              showStart.getTime() + (movie.runtime || 120) * 60 * 1000,
+            );
+            const ticketAmount =
+              (item.amount || 0) / Math.max(item.bookedSeats?.length || 1, 1);
 
             return (
+              <Fragment key={item._id}>
               <div
-                key={item._id}
                 className="flex flex-col md:flex-row justify-between bg-primary/8 border border-primary/20 rounded-xl overflow-hidden hover:border-primary/40 transition duration-300"
               >
                 {/* Left Section - Movie Info */}
@@ -204,6 +251,28 @@ const MyBookings = () => {
                       </p>
                       <p className="text-gray-400 text-sm mt-1">
                         {dateFormat(item.show.showDateTime)}
+                      </p>
+                      <p className="text-gray-300 text-sm mt-3">
+                        <span className="font-medium text-white">Theater:</span>{" "}
+                        {item.show.theaterName || "Venue details not available"}
+                      </p>
+                      {item.show.theaterAddress && (
+                        <p className="text-gray-400 text-sm mt-1">
+                          {item.show.theaterAddress}
+                        </p>
+                      )}
+                      {item.show.theaterMapUrl && (
+                        <a
+                          href={item.show.theaterMapUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="inline-block mt-1 text-primary hover:underline text-sm"
+                        >
+                          Open theater location
+                        </a>
+                      )}
+                      <p className="text-gray-400 text-sm mt-2">
+                        Booked: {formatDateTime(item.createdAt)}
                       </p>
                     </div>
                     <div className="mt-3 flex flex-wrap gap-2">
@@ -256,6 +325,78 @@ const MyBookings = () => {
                   )}
                 </div>
               </div>
+              {item.isPaid && (
+                <section
+                  aria-label={`${movie.title} entry tickets`}
+                  className="mt-3 grid grid-cols-1 lg:grid-cols-2 gap-3"
+                >
+                  {(item.tickets || []).map((ticket) => (
+                    <article
+                      key={ticket.ticketId}
+                      className="flex flex-col sm:flex-row items-center sm:items-start gap-4 rounded-xl border border-primary/20 bg-black/30 p-4"
+                    >
+                      <TicketQRCode ticketId={ticket.ticketId} />
+                      <div className="w-full min-w-0 text-sm space-y-2">
+                        <h3 className="text-lg font-semibold">
+                          {movie.title} · Seat {ticket.seat}
+                        </h3>
+                        <p className="text-gray-300">
+                          <span className="text-gray-500">Theater:</span>{" "}
+                          {item.show.theaterName || "Venue details unavailable"}
+                        </p>
+                        {item.show.theaterAddress && (
+                          <p className="text-gray-400">{item.show.theaterAddress}</p>
+                        )}
+                        {item.show.theaterMapUrl && (
+                          <a
+                            href={item.show.theaterMapUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="inline-flex text-primary hover:underline"
+                          >
+                            Get directions
+                          </a>
+                        )}
+                        <p>
+                          <span className="text-gray-500">Show:</span>{" "}
+                          {formatDateTime(item.show.showDateTime)}
+                        </p>
+                        <p>
+                          <span className="text-gray-500">Valid until:</span>{" "}
+                          {formatDateTime(validUntil)}
+                        </p>
+                        <p>
+                          <span className="text-gray-500">Booking date:</span>{" "}
+                          {formatDateTime(item.createdAt)}
+                        </p>
+                        <p>
+                          <span className="text-gray-500">Payment:</span>{" "}
+                          <span className="text-green-400">
+                            Paid{item.paidAt ? ` · ${formatDateTime(item.paidAt)}` : ""}
+                          </span>
+                        </p>
+                        {item.razorpayPaymentId && (
+                          <p className="break-all">
+                            <span className="text-gray-500">Payment ID:</span>{" "}
+                            {item.razorpayPaymentId}
+                          </p>
+                        )}
+                        <p>
+                          <span className="text-gray-500">Ticket amount:</span>{" "}
+                          {currency}
+                          {ticketAmount.toFixed(2)}
+                        </p>
+                        {ticket.checkedInAt && (
+                          <p className="text-primary">
+                            Used at {formatDateTime(ticket.checkedInAt)}
+                          </p>
+                        )}
+                      </div>
+                    </article>
+                  ))}
+                </section>
+              )}
+              </Fragment>
             );
           })}
         </div>

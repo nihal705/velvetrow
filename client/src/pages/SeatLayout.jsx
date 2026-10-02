@@ -268,14 +268,24 @@ const SeatLayout = () => {
             <div
               key={item.time}
               onClick={() => setSelectedTime(item)}
-              className={`flex items-center gap-2 px-6 py-2 w-max rounded-r-md cursor-pointer transition ${
+              className={`flex flex-col items-start gap-1 px-6 py-3 w-full text-left cursor-pointer transition ${
                 selectedTime?.time === item.time
                   ? "bg-primary text-white"
                   : "hover:bg-primary/20"
               }`}
             >
-              <ClockIcon className="w-4 h-4" />
-              <p className="text-sm">{isoTimeFormat(item.time)}</p>
+              <span className="flex items-center gap-2">
+                <ClockIcon className="w-4 h-4" />
+                <span className="text-sm">{isoTimeFormat(item.time)}</span>
+              </span>
+              {item.theaterName && (
+                <span className="text-xs font-medium">{item.theaterName}</span>
+              )}
+              {item.theaterAddress && (
+                <span className="text-xs text-gray-400 whitespace-normal">
+                  {item.theaterAddress}
+                </span>
+              )}
             </div>
           ))}
         </div>
