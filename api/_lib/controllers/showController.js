@@ -117,7 +117,33 @@ export const getNowPlayingMovies = async (req, res) => {
 // API to add a new show to the database
 export const addShow = async (req, res) => {
   try {
-    const { movieId, showsInput, showPrice } = req.body;
+    const {
+      movieId,
+      showsInput,
+      showPrice,
+      theaterName,
+      theaterAddress,
+      theaterMapUrl,
+    } = req.body;
+
+    if (
+      typeof theaterName !== "string" ||
+      !theaterName.trim() ||
+      typeof theaterAddress !== "string" ||
+      !theaterAddress.trim()
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "Enter the theater name and address.",
+      });
+    }
+
+    if (theaterMapUrl && !/^https?:\/\/[^\s]+$/i.test(theaterMapUrl)) {
+      return res.status(400).json({
+        success: false,
+        message: "Enter a valid theater map URL.",
+      });
+    }
 
     if (!Array.isArray(showsInput) || showsInput.length === 0) {
       return res.status(400).json({
@@ -260,6 +286,9 @@ export const addShow = async (req, res) => {
           movie: movieId,
           showDateTime: new Date(dateTimeString),
           showPrice,
+          theaterName: theaterName.trim(),
+          theaterAddress: theaterAddress.trim(),
+          theaterMapUrl: theaterMapUrl?.trim() || "",
           occupiedSeats: {},
         });
       });
@@ -335,7 +364,13 @@ export const getShow = async (req, res) => {
       if (!dateTime[date]) {
         dateTime[date] = [];
       }
-      dateTime[date].push({ time: show.showDateTime, showId: show._id });
+      dateTime[date].push({
+        time: show.showDateTime,
+        showId: show._id,
+        theaterName: show.theaterName,
+        theaterAddress: show.theaterAddress,
+        theaterMapUrl: show.theaterMapUrl,
+      });
     });
 
     res.json({ success: true, movie, dateTime });

@@ -117,7 +117,96 @@ export const getNowPlayingMovies = async (req, res) => {
 // API to add a new show to the database
 export const addShow = async (req, res) => {
   try {
-    const { movieId, showsInput, showPrice } = req.body;
+    const {
+      movieId,
+      showsInput,
+      showPrice,
+      theaterName,
+      theaterAddress,
+      theaterMapUrl,
+    } = req.body;
+
+    if (
+      typeof theaterName !== "string" ||
+      !theaterName.trim() ||
+      typeof theaterAddress !== "string" ||
+      !theaterAddress.trim()
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "Enter the theater name and address.",
+      });
+    }
+
+    if (theaterMapUrl && !/^https?:\/\/[^\s]+$/i.test(theaterMapUrl)) {
+      return res.status(400).json({
+        success: false,
+        message: "Enter a valid theater map URL.",
+      });
+    }
+
+    if (!Array.isArray(showsInput) || showsInput.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Add at least one show date and time.",
+      });
+    }
+
+    if (!Number.isFinite(Number(showPrice)) || Number(showPrice) <= 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Enter a valid show price.",
+      });
+    }
+
+    const now = new Date();
+    for (const show of showsInput) {
+      if (
+        !show ||
+        typeof show.date !== "string" ||
+        !/^\d{4}-\d{2}-\d{2}$/.test(show.date) ||
+        !Array.isArray(show.time) ||
+        show.time.length === 0
+      ) {
+        return res.status(400).json({
+          success: false,
+          message: "Each show must have a valid date and at least one time.",
+        });
+      }
+
+      const [year, month, day] = show.date.split("-").map(Number);
+      const validDate = new Date(Date.UTC(year, month - 1, day));
+      if (
+        validDate.getUTCFullYear() !== year ||
+        validDate.getUTCMonth() !== month - 1 ||
+        validDate.getUTCDate() !== day
+      ) {
+        return res.status(400).json({
+          success: false,
+          message: "Enter a valid show date.",
+        });
+      }
+
+      for (const time of show.time) {
+        if (typeof time !== "string" || !/^\d{2}:\d{2}$/.test(time)) {
+          return res.status(400).json({
+            success: false,
+            message: "Enter a valid show time.",
+          });
+        }
+
+        const showDateTime = new Date(`${show.date}T${time}:00`);
+        if (
+          Number.isNaN(showDateTime.getTime()) ||
+          showDateTime <= now
+        ) {
+          return res.status(400).json({
+            success: false,
+            message: "Show dates and times must be in the future.",
+          });
+        }
+      }
+    }
 
     let movie = await Movie.findById(movieId);
 
@@ -197,6 +286,9 @@ export const addShow = async (req, res) => {
           movie: movieId,
           showDateTime: new Date(dateTimeString),
           showPrice,
+          theaterName: theaterName.trim(),
+          theaterAddress: theaterAddress.trim(),
+          theaterMapUrl: theaterMapUrl?.trim() || "",
           occupiedSeats: {},
         });
       });
@@ -272,7 +364,13 @@ export const getShow = async (req, res) => {
       if (!dateTime[date]) {
         dateTime[date] = [];
       }
-      dateTime[date].push({ time: show.showDateTime, showId: show._id });
+      dateTime[date].push({
+        time: show.showDateTime,
+        showId: show._id,
+        theaterName: show.theaterName,
+        theaterAddress: show.theaterAddress,
+        theaterMapUrl: show.theaterMapUrl,
+      });
     });
 
     res.json({ success: true, movie, dateTime });

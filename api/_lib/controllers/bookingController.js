@@ -76,6 +76,10 @@ export const createBooking = async (req, res) => {
       show: showId,
       amount: showData.showPrice * selectedSeats.length,
       bookedSeats: selectedSeats,
+      tickets: selectedSeats.map((seat) => ({
+        seat,
+        ticketId: crypto.randomBytes(24).toString("hex"),
+      })),
     });
 
     // Reserve seats
@@ -310,6 +314,7 @@ export const verifyPayment = async (req, res) => {
       razorpayOrderId: razorpay_order_id,
     }, {
       isPaid: true,
+      paidAt: new Date(),
       razorpayPaymentId: razorpay_payment_id,
       razorpayOrderId: razorpay_order_id,
       paymentLink: "",
