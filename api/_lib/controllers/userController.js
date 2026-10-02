@@ -1,12 +1,14 @@
 import { clerkClient } from "@clerk/express";
 import Booking from "../models/Booking.js";
 import Movie from "../models/Movie.js";
+import { expirePendingBookings } from "../utils/bookingCleanup.js";
 
 // API Controller Function to Get User Bookings
 export const getUserBookings = async (req, res) => {
   try {
     const user = req.auth.userId; // ← FIXED: removed parentheses
 
+    await expirePendingBookings({ user });
     const bookings = await Booking.find({ user })
       .populate({
         path: "show",
