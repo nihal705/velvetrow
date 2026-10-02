@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { dummyShowsData } from "../assets/assets";
 import BlurCircle from "../components/BlurCircle";
 import { Heart, PlayCircleIcon, StarIcon } from "lucide-react";
 import timeFormat from "../lib/timeFormat";
@@ -18,6 +17,7 @@ const MovieDetails = () => {
   const navigate = useNavigate();
 
   const {
+    shows,
     axios,
     getToken,
     user,
@@ -164,8 +164,8 @@ const MovieDetails = () => {
       <p className="text-lg font-medium mt-20 mb-8">You May Also Like</p>
 
       <div className="flex flex-wrap max-sm:justify-center gap-8">
-        {dummyShowsData.slice(0, 4).map((movie, index) => (
-          <MovieCard key={index} movie={movie} />
+        {shows.filter((movie) => movie._id !== id).slice(0, 4).map((movie) => (
+          <MovieCard key={movie._id} movie={movie} />
         ))}
       </div>
 
