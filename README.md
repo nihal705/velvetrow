@@ -240,6 +240,8 @@ json
 { "role": "admin" }
 ```
 
+Sign in to the application using that same Clerk user. Admin API routes only allow users whose Clerk private or public metadata contains `"role": "admin"`.
+
 📁 Project Structure
 ```text
 velvetrow/

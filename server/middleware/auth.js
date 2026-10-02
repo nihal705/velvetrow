@@ -1,17 +1,30 @@
 import { clerkClient } from "@clerk/clerk-sdk-node";
 
 export const protectAdmin = async (req, res, next) => {
+  const userId = req.auth?.userId;
+
+  if (!userId) {
+    return res.status(401).json({
+      success: false,
+      message: "Sign in with your admin account to continue.",
+    });
+  }
+
   try {
-    const { userId } = req.auth; // ← FIXED: removed parentheses
-
     const user = await clerkClient.users.getUser(userId);
+    const roles = [user.privateMetadata?.role, user.publicMetadata?.role];
 
-    if (user.privateMetadata.role !== "admin") {
-      return res.json({ success: false, message: "not authorized" });
+    if (!roles.some((role) => typeof role === "string" && role.toLowerCase() === "admin")) {
+      return res.status(403).json({
+        success: false,
+        message:
+          "Admin access is not enabled for this account. Set role to admin in your Clerk user metadata.",
+      });
     }
 
-    next();
   } catch (error) {
-    return res.json({ success: false, message: "not authorized" });
+    return next(error);
   }
+
+  return next();
 };
