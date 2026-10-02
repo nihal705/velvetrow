@@ -195,6 +195,10 @@ SMTP_PASS=your-smtp-password
 
 Razorpay Checkout uses the key ID returned by the backend order endpoint, so do not expose or configure the Razorpay key secret in the client. `RAZORPAY_KEY_ID` and `RAZORPAY_KEY_SECRET` must be a matching pair from the same Razorpay account and mode. `RAZORPAY_WEBHOOK_SECRET` is a separate secret generated in the Razorpay webhook settings.
 
+### Theater tickets and check-in
+
+Admins enter the theater name and address when adding a show, or update an existing show from **Admin → List Shows**; an optional HTTP(S) map link is displayed with paid tickets. Each paid seat receives its own QR ticket. Tickets can be checked in from **Admin → Scan Tickets** once per seat, starting one hour before showtime through the scheduled end of the movie (showtime plus movie runtime). Pending bookings do not receive usable tickets.
+
 ### Installation
 
 #### Clone the repository
@@ -239,7 +243,8 @@ json
 { "role": "admin" }
 ```
 
-Sign in to the application using that same Clerk user. Admin API routes only allow users whose Clerk private or public metadata contains `"role": "admin"`.
+Sign in to the application using that same Clerk user.
+Admin API routes only allow users whose Clerk private or public metadata contains `"role": "admin"`.
 
 📁 Project Structure
 ```text
