@@ -36,20 +36,18 @@
 
 ## 📋 Table of Contents
 
-- [Overview](#overview)
-- [Features](#features)
-- [Tech Stack](#tech-stack)
-- [Getting Started](#getting-started)
+- [Overview](#-overview)
+- [Features](#-features)
+- [Tech Stack](#%EF%B8%8F-tech-stack)
+- [Getting Started](#-getting-started)
   - [Prerequisites](#prerequisites)
   - [Environment Variables](#environment-variables)
   - [Installation](#installation)
-  - [Running the Application](#running-the-application)
 - [Project Structure](#project-structure)
-- [API Documentation](#api-documentation)
-- [Deployment](#deployment)
-- [Screenshots](#screenshots)
-- [Contributing](#contributing)
-- [License](#license)
+- [API Documentation](#-api-documentation)
+- [Deployment](#-deployment)
+- [Contributing](#-contributing)
+- [License](#-license)
 
 ---
 
@@ -193,11 +191,18 @@ SMTP_USER=your-smtp-username
 SMTP_PASS=your-smtp-password
 ```
 
-Razorpay Checkout uses the key ID returned by the backend order endpoint, so do not expose or configure the Razorpay key secret in the client. `RAZORPAY_KEY_ID` and `RAZORPAY_KEY_SECRET` must be a matching pair from the same Razorpay account and mode. `RAZORPAY_WEBHOOK_SECRET` is a separate secret generated in the Razorpay webhook settings.
+## Configuration & Admin Guidelines
 
-### Theater tickets and check-in
+### Security Notice
+* **Razorpay Checkout** uses the key ID returned by the backend order endpoint. **Do not** expose or configure the Razorpay key secret in the client.
+* `RAZORPAY_KEY_ID` and `RAZORPAY_KEY_SECRET` must be a matching pair from the same Razorpay account and mode.
+* `RAZORPAY_WEBHOOK_SECRET` is a separate secret generated in the Razorpay webhook settings.
 
-Admins enter the theater name and address when adding a show, or update an existing show from **Admin → List Shows**; an optional HTTP(S) map link is displayed with paid tickets. Each paid seat receives its own QR ticket. Tickets can be checked in from **Admin → Scan Tickets** once per seat, starting one hour before showtime through the scheduled end of the movie (showtime plus movie runtime). Pending bookings do not receive usable tickets.
+### Theater Tickets and Check-In
+* **Adding & Updating Shows:** Admins enter the theater name and address when adding a show, or update an existing show from **Admin → List Shows**. An optional HTTP(S) map link is displayed with paid tickets.
+* **Ticketing:** Each paid seat receives its own QR ticket. Pending bookings do not receive usable tickets.
+* **Check-In Validation:** Tickets can be checked in from **Admin → Scan Tickets** once per seat. Scanning is active starting one hour before showtime through the scheduled end of the movie (showtime plus movie runtime).
+
 
 ### Installation
 
@@ -206,47 +211,66 @@ Admins enter the theater name and address when adding a show, or update an exist
 ```bash
 git clone https://github.com/nihalmohammad705-debug/velvetrow.git
 cd velvetrow
-Install server dependencies
-
-bash
-cd server
-npm install
-Install client dependencies
-
-bash
-cd ../client
-npm install
-Running the Application
-Start the backend server
-
-bash
-cd server
-npm run server
-Start the frontend development server
-
-bash
-cd client
-npm run dev
-Access the application
-
-Frontend: http://localhost:5173
-
-Backend API: http://localhost:3000
-
-Admin Panel: http://localhost:5173/admin
-
-Make yourself an admin
-
-In Clerk Dashboard → Users → Your User → Private Metadata → Add:
-
-json
-{ "role": "admin" }
 ```
 
-Sign in to the application using that same Clerk user.
-Admin API routes only allow users whose Clerk private or public metadata contains `"role": "admin"`.
+#### Install server dependencies
 
-📁 Project Structure
+```bash
+cd server
+npm install
+```
+
+#### Install client dependencies
+
+```bash
+cd ../client
+npm install
+```
+
+### Running the Application
+
+#### Start the backend server
+
+```bash
+cd ../server
+npm run server
+```
+
+#### Start the frontend development server
+
+```bash
+cd ../client
+npm run dev
+```
+
+#### Access the application
+
+* **Frontend:** `http://localhost:5173`
+* **Backend API:** `http://localhost:3000`
+* **Admin Panel:** `http://localhost:5173/admin`
+
+#### Make yourself an admin
+
+In **Clerk Dashboard** → **Users** → **Your User** → **Private Metadata** → Add:
+
+```json
+{ 
+  "role": "admin" 
+}
+```
+
+
+## Authentication & Authorization
+
+### User Sign-In
+* **Authentication Provider:** Sign in to the application using your configured **Clerk user account**.
+
+### Admin Access & API Security
+* **Role-Based Access Control (RBAC):** Admin API routes strictly allow users whose Clerk **private** or **public metadata** contains `"role": "admin"`.
+* **Unauthorized Access:** Requests to admin endpoints will be rejected if this metadata field is missing or incorrect.
+
+
+## 📁 Project Structure
 ```text
 velvetrow/
 ├── client/                          # Frontend React application
@@ -298,82 +322,97 @@ velvetrow/
 ## 📡 API Documentation
 
 ### Movie & Show Endpoints
-Method	Endpoint	Description
-GET	/api/show/all	Get all shows
-GET	/api/show/:movieId	Get show details
-POST	/api/show/add	Add new show (Admin)
-GET	/api/show/now-playing	Get now playing movies (Admin)
-Booking Endpoints
-Method	Endpoint	Description
-POST	/api/booking/create	Create new booking
-POST	/api/booking/verify-payment	Verify payment
-GET	/api/booking/seats/:showId	Get occupied seats
+
+| Method | Endpoint | Description |
+| :--- | :--- | :--- |
+| `GET` | `/api/show/all` | Get all shows |
+| `GET` | `/api/show/:movieId` | Get show details |
+| `POST` | `/api/show/add` | Add new show (Admin) |
+| `GET` | `/api/show/now-playing` | Get now playing movies (Admin) |
+
+#### Booking Endpoints
+
+| Method | Endpoint | Description |
+| :--- | :--- | :--- |
+| `POST` | `/api/booking/create` | Create new booking |
+| `POST` | `/api/booking/verify-payment` | Verify payment |
+| `GET` | `/api/booking/seats/:showId` | Get occupied seats |
 
 ### Admin Endpoints
-Method	Endpoint	Description
-GET	/api/admin/is-admin	Check if user is admin
-GET	/api/admin/dashboard	Get dashboard data
-GET	/api/admin/all-shows	Get all shows
-GET	/api/admin/all-bookings	Get all bookings
+
+| Method | Endpoint | Description |
+| :--- | :--- | :--- |
+| `GET` | `/api/admin/is-admin` | Check if user is admin |
+| `GET` | `/api/admin/dashboard` | Get dashboard data |
+| `GET` | `/api/admin/all-shows` | Get all shows |
+| `GET` | `/api/admin/all-bookings` | Get all bookings |
 
 ### User Endpoints
-Method	Endpoint	Description
-GET	/api/user/bookings	Get user bookings
-POST	/api/user/update-favorite	Update favorite movies
-GET	/api/user/favorites	Get favorite movies
+
+| Method | Endpoint | Description |
+| :--- | :--- | :--- |
+| `GET` | `/api/user/bookings` | Get user bookings |
+| `POST` | `/api/user/update-favorite` | Update favorite movies |
+| `GET` | `/api/user/favorites` | Get favorite movies |
 
 ## 🚀 Deployment
-Deploy to Vercel
-Push your code to GitHub
+
+### Push your code to GitHub
 
 ```bash
 git add .
 git commit -m "Deploy to Vercel"
 git push
-
-Import your repository to Vercel
-
-Add environment variables in Vercel Dashboard → Settings → Environment Variables
-
-Deploy
-
-vercel --prod
-Environment Variables on Vercel
-Variable	Value
-MONGODB_URI	MongoDB connection string
-CLERK_PUBLISHABLE_KEY	Clerk publishable key
-CLERK_SECRET_KEY	Clerk secret key
-TMDB_API_KEY	TMDB API key
-RAZORPAY_KEY_ID	Razorpay key ID
-RAZORPAY_KEY_SECRET	Razorpay secret key
-RAZORPAY_WEBHOOK_SECRET	Razorpay webhook secret
-INNGEST_EVENT_KEY	Inngest event key
-INNGEST_SIGNING_KEY	Inngest signing key
 ```
+
+### Deploy to Vercel
+
+1. Import your repository to [Vercel](https://vercel.com).
+2. Add your environment variables in **Vercel Dashboard → Settings → Environment Variables**.
+3. Deploy the application.
+
+
+### Environment Variables on Vercel
+
+| Variable | Value |
+| :--- | :--- |
+| `MONGODB_URI` | MongoDB connection string |
+| `CLERK_PUBLISHABLE_KEY` | Clerk publishable key |
+| `CLERK_SECRET_KEY` | Clerk secret key |
+| `TMDB_API_KEY` | TMDB API key |
+| `RAZORPAY_KEY_ID` | Razorpay key ID |
+| `RAZORPAY_KEY_SECRET` | Razorpay secret key |
+| `RAZORPAY_WEBHOOK_SECRET` | Razorpay webhook secret |
+| `INNGEST_EVENT_KEY` | Inngest event key |
+| `INNGEST_SIGNING_KEY` | Inngest signing key |
 
 ## 🧪 Testing
 
-Test Payment
-Use Razorpay test card:
+### Test Payment
+Use the following Razorpay credentials to execute test transactions:
 
-Card Number: 4111 1111 1111 1111
-
-Expiry: Any future date
-
-CVV: Any 3 digits
-
-OTP: 1234
+* **Card Number:** `4111 1111 1111 1111`
+* **Expiry:** Any future date (e.g., `12/30`)
+* **CVV:** Any 3 digits (e.g., `123`)
+* **OTP:** `1234`
 
 ## 🤝 Contributing
-Fork the repository
 
-Create a feature branch (git checkout -b feature/amazing-feature)
-
-Commit your changes (git commit -m 'Add some amazing feature')
-
-Push to the branch (git push origin feature/amazing-feature)
-
-Open a Pull Request
+1. Fork the repository
+2. Create a feature branch:
+   ```bash
+   git checkout -b feature/amazing-feature
+   ```
+3. Commit your changes:
+   ```bash
+   git commit -m 'Add some amazing feature'
+   ```
+4. Push to the branch:
+   ```bash
+   git push origin feature/amazing-feature
+   ```
+5. Open a Pull Request
 
 ## 📄 License
+
 This project is for educational purposes only. Built as a learning project.
